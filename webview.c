@@ -314,25 +314,18 @@ static int lua_webview_fromstring(lua_State *l) {
 	return 0;
 }
 
+static int lua_webview_showwindow(lua_State *l) {
+	LuaWebView *lwv = (LuaWebView *)lua_webview_asudata(l, 1);
+	int showwindow = lua_toboolean(l, 2);
+	webview_show_window(&lwv->webview, showwindow );
+	return 0;
+}
+
 static int lua_webview_gc(lua_State *l) {
 	LuaWebView *lwv = (LuaWebView *)luaL_testudata(l, 1, "webview");
 	clean_webview(l, lwv);
 	return 0;
 }
-
-#if defined(WEBVIEW2_MEMORY_MODULE)
-static int lua_webview_loadWebView2Dll(lua_State *l) {
-	void *data;
-	size_t len = 0;
-	int status = 0;
-	data = lua_tolstring(l, 1, &len);
-	if (data != NULL && len > 0 && WebView2Load(data, len)) {
-		status = 1;
-	}
-	lua_pushboolean(l, status);
-	return 1;
-}
-#endif
 
 LUALIB_API int luaopen_webview(lua_State *l) {
 	luaL_newmetatable(l, "webview");
@@ -356,9 +349,7 @@ LUALIB_API int luaopen_webview(lua_State *l) {
 		{ "lighten", lua_webview_lighten },
 		{ "asstring", lua_webview_asstring },
 		{ "fromstring", lua_webview_fromstring },
-#if defined(WEBVIEW2_MEMORY_MODULE)
-		{ "loadWebView2Dll", lua_webview_loadWebView2Dll },
-#endif
+		{ "showwindow", lua_webview_showwindow },
 		{ NULL, NULL }
 	};
 	lua_newtable(l);

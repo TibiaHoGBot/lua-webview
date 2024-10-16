@@ -1,6 +1,0 @@
-[submodule "webview-c"]
-	path = webview-c
-	url = https://github.com/javalikescript/webview-c.git
-[submodule "MemoryModule"]
-	path = MemoryModule
-	url = https://github.com/fancycode/MemoryModule.git

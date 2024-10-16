@@ -11,7 +11,7 @@
 
 CC ?= gcc
 
-PLAT ?= windows
+PLAT ?= linux
 LIBNAME = webview
 
 ifdef LUA_LIBDIR
@@ -21,10 +21,11 @@ LUA_LIBDIR_OPT=
 endif
 
 #LUA_APP = $(LUA_BINDIR)/$(LUA)
-LUA_APP = $(LUA)
+LUA_APP = lua5.4
 LUA_VERSION = $(shell $(LUA_APP) -e "print(string.sub(_VERSION, 5))")
 LUA_LIBNAME = lua$(subst .,,$(LUA_VERSION))
 LUA_BITS = $(shell $(LUA_APP) -e "print(string.len(string.pack('T', 0)) * 8)")
+LUA_INCDIR = /usr/include/lua5.4
 
 WEBVIEW_ARCH = x64
 ifeq ($(LUA_BITS),32)
@@ -32,27 +33,9 @@ ifeq ($(LUA_BITS),32)
 endif
 
 WEBVIEW_C = webview-c
-MS_WEBVIEW2 = $(WEBVIEW_C)/ms.webview2
-
-CFLAGS_windows = -Wall \
-  -Wextra \
-  -Wno-unused-parameter \
-  -Wstrict-prototypes \
-  -I$(WEBVIEW_C) \
-  -I$(MS_WEBVIEW2)/include \
-  -I$(LUA_INCDIR) \
-  -DWEBVIEW_WINAPI=1
-
-LIBFLAG_windows = -O \
-  -shared \
-  -Wl,-s \
-  $(LUA_LIBDIR_OPT) -l$(LUA_LIBNAME) \
-  -static-libgcc \
-  -lole32 -lcomctl32 -loleaut32 -luuid -lgdi32
-
-TARGET_windows = $(LIBNAME).dll
 
 CFLAGS_linux = -pedantic  \
+  -fPIC \
   -Wall \
   -Wextra \
   -Wno-unused-parameter \
@@ -60,12 +43,12 @@ CFLAGS_linux = -pedantic  \
   -I$(WEBVIEW_C) \
   -I$(LUA_INCDIR) \
   -DWEBVIEW_GTK=1 \
-  $(shell pkg-config --cflags gtk+-3.0 webkit2gtk-4.0)
+  $(shell pkg-config --cflags gtk+-3.0 webkit2gtk-4.1 lua5.4)
 
-LIBFLAG_linux= -static-libgcc \
+LIBFLAG_linux= -shared -static-libgcc \
   -Wl,-s \
   $(LUA_LIBDIR_OPT) \
-  $(shell pkg-config --libs gtk+-3.0 webkit2gtk-4.0)
+  $(shell pkg-config --libs gtk+-3.0 webkit2gtk-4.1 lua5.4)
 
 TARGET_linux = $(LIBNAME).so
 
@@ -81,11 +64,6 @@ lib: $(TARGET)
 install: install-$(PLAT)
 	cp $(TARGET) $(INST_LIBDIR)
 	-cp webview-launcher.lua $(INST_LUADIR)
-
-install-linux:
-
-install-windows:
-	cp $(MS_WEBVIEW2)/$(WEBVIEW_ARCH)/WebView2Loader.dll $(INST_BINDIR)
 
 show:
 	@echo PLAT: $(PLAT)

@@ -189,9 +189,12 @@ WEBVIEW_API void webview_show_window(struct webview *w, int show)
 }
 
 WEBVIEW_API void webview_dialog(struct webview *w,
-                                enum webview_dialog_type dlgtype, int flags,
-                                const char *title, const char *arg,
-                                char *result, size_t resultsz) {
+                                enum webview_dialog_type dlgtype, 
+                                int flags,
+                                const char *title, 
+                                const char *arg,
+                                char *result, 
+                                size_t resultsz) {
   GtkWidget *dlg;
   if (result != NULL) {
     result[0] = '\0';

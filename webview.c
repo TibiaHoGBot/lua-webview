@@ -321,6 +321,20 @@ static int lua_webview_showwindow(lua_State *l) {
 	return 0;
 }
 
+static int lua_webview_dialog(lua_State *l) {
+	LuaWebView *lwv = (LuaWebView *)lua_webview_asudata(l, 1);
+	int type = lua_tointeger(l, 2);
+	int flags = lua_tointeger(l, 3);
+	const char *title = luaL_checkstring(l, 4);
+	const char *arg = luaL_checkstring(l, 5);
+	const char *result = luaL_checkstring(l, 6);
+	int resultsz = lua_tointeger(l, 7);
+	webview_dialog(&lwv->webview, type, flags, title, arg, result, resultsz);
+ 	
+	lua_pushlstring(l, (const char *)result, sizeof(void *));
+	return 1;
+}
+
 static int lua_webview_gc(lua_State *l) {
 	LuaWebView *lwv = (LuaWebView *)luaL_testudata(l, 1, "webview");
 	clean_webview(l, lwv);
@@ -350,8 +364,10 @@ LUALIB_API int luaopen_webview(lua_State *l) {
 		{ "asstring", lua_webview_asstring },
 		{ "fromstring", lua_webview_fromstring },
 		{ "showwindow", lua_webview_showwindow },
+		{ "dialog", lua_webview_dialog },
 		{ NULL, NULL }
 	};
+	
 	lua_newtable(l);
 	luaL_setfuncs(l, reg, 0);
 	lua_pushliteral(l, "Lua webview");

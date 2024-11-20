@@ -106,7 +106,7 @@ WEBVIEW_API int webview_init(struct webview *w) {
   w->priv.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title(GTK_WINDOW(w->priv.window), w->title);
   gtk_widget_hide(GTK_WINDOW(w->priv.window));
-  gtk_window_set_hide_on_close(GTK_WINDOW(w->priv.window), TRUE);
+  gtk_widget_hide_on_delete(GTK_WINDOW(w->priv.window));
 
   if (w->resizable) {
     gtk_window_set_default_size(GTK_WINDOW(w->priv.window), w->width,

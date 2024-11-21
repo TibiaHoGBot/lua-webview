@@ -89,6 +89,12 @@ static void noLogHandler(const gchar *domain, GLogLevelFlags level, const gchar 
   return;
 }
 
+gboolean webview_on_win_delete(GtkWidget *widget, GdkEvent *event, gpointer data)
+{
+    gtk_widget_hide(widget);
+    return TRUE;
+}
+
 WEBVIEW_API int webview_init(struct webview *w) {
 
   if (!w->debug) {
@@ -106,7 +112,8 @@ WEBVIEW_API int webview_init(struct webview *w) {
   w->priv.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title(GTK_WINDOW(w->priv.window), w->title);
   gtk_widget_hide(GTK_WINDOW(w->priv.window));
-  gtk_widget_hide_on_delete(GTK_WINDOW(w->priv.window));
+  g_signal_connect(G_OBJECT(w->priv.window), 
+        "delete-event", G_CALLBACK(webview_on_win_delete), NULL);
 
   if (w->resizable) {
     gtk_window_set_default_size(GTK_WINDOW(w->priv.window), w->width,

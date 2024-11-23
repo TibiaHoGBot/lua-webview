@@ -157,6 +157,7 @@ WEBVIEW_API void webview_exit(struct webview *w);
 WEBVIEW_API void webview_debug(const char *format, ...);
 WEBVIEW_API void webview_print_log(const char *s);
 WEBVIEW_API void webview_show_window(struct webview *w, int show);
+WEBVIEW_API void webview_destroy_window(struct webview *w);
 
 
 #ifdef WEBVIEW_IMPLEMENTATION

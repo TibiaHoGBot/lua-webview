@@ -196,6 +196,10 @@ WEBVIEW_API void webview_show_window(struct webview *w, int show)
     gtk_widget_hide(GTK_WINDOW(w->priv.window));
 }
 
+WEBVIEW_API void webview_destroy_window(struct webview *w) {
+  gtk_widget_destroy(GTK_WINDOW(w->priv.window));
+}
+
 WEBVIEW_API void webview_dialog(struct webview *w,
                                 enum webview_dialog_type dlgtype, 
                                 int flags,

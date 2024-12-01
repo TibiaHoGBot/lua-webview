@@ -84,6 +84,7 @@ static void unregisterLuaReference(LuaReference *r, lua_State *l) {
 
 typedef struct LuaWebViewStruct {
 	LuaReference cbFn;
+	LuaReference onWindowClosedFn;
 	lua_State *initState;
 	struct webview webview;
 } LuaWebView;
@@ -122,7 +123,8 @@ static LuaWebView * lua_webview_newuserdata(lua_State *l) {
 	lua_Integer width = luaL_optinteger(l, 3, 800);
 	lua_Integer height = luaL_optinteger(l, 4, 600);
 	lua_Integer resizable = lua_toboolean(l, 5);
-	lua_Integer debug = lua_toboolean(l, 6);
+	lua_Integer hidden = lua_toboolean(l, 6);
+	lua_Integer debug = lua_toboolean(l, 7);
 	LuaWebView *lwv = (LuaWebView *)lua_newuserdata(l, sizeof(LuaWebView) + titleLen + 1 + urlLen + 1);
 	const char *titleCopy = ((char *)lwv) + sizeof(LuaWebView);
 	const char *urlCopy = ((char *)lwv) + sizeof(LuaWebView) + titleLen + 1;
@@ -135,8 +137,10 @@ static LuaWebView * lua_webview_newuserdata(lua_State *l) {
 	lwv->webview.width = width;
 	lwv->webview.height = height;
 	lwv->webview.resizable = resizable;
+	lwv->webview.hidden = hidden;
 	lwv->webview.debug = debug;
 	initLuaReference(&lwv->cbFn);
+	initLuaReference(&lwv->onWindowClosedFn);
 	return lwv;
 }
 
@@ -278,8 +282,8 @@ static int lua_webview_terminate(lua_State *l) {
 static void clean_webview(lua_State *l, LuaWebView *lwv) {
 	if (lwv != NULL) {
 		unregisterLuaReference(&lwv->cbFn, l);
+		unregisterLuaReference(&lwv->onWindowClosedFn, l);
 		if (lwv->initState == l) {
-			//webview_debug("clean_webview()");
 			webview_exit(&lwv->webview);
 			lwv->initState = NULL;
 		}
@@ -341,6 +345,41 @@ static int lua_webview_dialog(lua_State *l) {
 	return 1;
 }
 
+gboolean lua_webview_on_window_closed_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data) {
+	LuaReference *ref = (LuaReference *)user_data;
+
+	if (ref && ref->state) {
+		lua_State *l = ref->state;
+
+		lua_rawgeti(l, LUA_REGISTRYINDEX, ref->ref);
+		
+		if (lua_pcall(l, 0, 1, 0) != 0) {
+			g_warning("Error calling Lua callback: %s", lua_tostring(l, -1));
+			lua_pop(l, 1);
+		}
+
+		int stop_propagate = lua_toboolean(l, -1);
+
+		return (stop_propagate ? TRUE : FALSE);
+	}
+
+	return FALSE;
+}
+
+static int lua_webview_on_window_closed(lua_State *l) {
+	LuaWebView *lwv = (LuaWebView *)lua_webview_asudata(l, 1);
+
+	if (lua_isfunction(l, 2)) {
+		lua_pushvalue(l, 2);
+		registerLuaReference(&lwv->onWindowClosedFn, l);
+		webview_signal_connect(&lwv->webview, "delete-event", lua_webview_on_window_closed_cb, (void *)&lwv->onWindowClosedFn);
+	} else {
+		unregisterLuaReference(&lwv->onWindowClosedFn, l);
+	}
+
+	return 0;
+}
+
 static int lua_webview_gc(lua_State *l) {
 	LuaWebView *lwv = (LuaWebView *)luaL_testudata(l, 1, "webview");
 	clean_webview(l, lwv);
@@ -372,6 +411,7 @@ LUALIB_API int luaopen_webview(lua_State *l) {
 		{ "showwindow", lua_webview_showwindow },
 		{ "destroywindow", lua_webview_destroywindow },
 		{ "dialog", lua_webview_dialog },
+		{ "onwindowclosed", lua_webview_on_window_closed },
 		{ NULL, NULL }
 	};
 	

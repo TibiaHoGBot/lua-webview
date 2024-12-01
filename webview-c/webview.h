@@ -103,6 +103,7 @@ struct webview {
   int width;
   int height;
   int resizable;
+  int hidden;
   int debug;
   webview_external_invoke_cb_t external_invoke_cb;
   struct webview_priv priv;
@@ -158,6 +159,7 @@ WEBVIEW_API void webview_debug(const char *format, ...);
 WEBVIEW_API void webview_print_log(const char *s);
 WEBVIEW_API void webview_show_window(struct webview *w, int show);
 WEBVIEW_API void webview_destroy_window(struct webview *w);
+WEBVIEW_API void webview_signal_connect(struct webview* w, const char *event_name, GCallback callback, void* arg);
 
 
 #ifdef WEBVIEW_IMPLEMENTATION

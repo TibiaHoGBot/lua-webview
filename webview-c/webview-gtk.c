@@ -89,12 +89,6 @@ static void noLogHandler(const gchar *domain, GLogLevelFlags level, const gchar 
   return;
 }
 
-gboolean webview_on_win_delete(GtkWidget *widget, GdkEvent *event, gpointer data)
-{
-    gtk_widget_hide(widget);
-    return TRUE;
-}
-
 WEBVIEW_API int webview_init(struct webview *w) {
 
   if (!w->debug) {
@@ -111,9 +105,6 @@ WEBVIEW_API int webview_init(struct webview *w) {
   w->priv.queue = g_async_queue_new();
   w->priv.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title(GTK_WINDOW(w->priv.window), w->title);
-  gtk_widget_hide(GTK_WINDOW(w->priv.window));
-  g_signal_connect(G_OBJECT(w->priv.window), 
-        "delete-event", G_CALLBACK(webview_on_win_delete), NULL);
 
   if (w->resizable) {
     gtk_window_set_default_size(GTK_WINDOW(w->priv.window), w->width,
@@ -154,7 +145,9 @@ WEBVIEW_API int webview_init(struct webview *w) {
                      G_CALLBACK(webview_context_menu_cb), w);
   }
 
-  gtk_widget_show_all(w->priv.window);
+  if (!w->hidden) {
+    gtk_widget_show_all(w->priv.window);
+  }
 
   webkit_web_view_run_javascript(WEBKIT_WEB_VIEW(w->priv.webview),
     REGISTER_EXTERNAL_INVOKE_JS, NULL, NULL, NULL);
@@ -314,4 +307,9 @@ WEBVIEW_API void webview_terminate(struct webview *w) {
 WEBVIEW_API void webview_exit(struct webview *w) { (void)w; }
 WEBVIEW_API void webview_print_log(const char *s) {
   fprintf(stderr, "%s\n", s);
+}
+
+WEBVIEW_API void webview_signal_connect(struct webview* w, const char *event_name, GCallback callback, void* arg) {
+  g_signal_connect(G_OBJECT(w->priv.window),
+      event_name, G_CALLBACK(callback), arg);
 }

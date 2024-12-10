@@ -184,7 +184,7 @@ WEBVIEW_API void webview_set_color(struct webview *w, uint8_t r, uint8_t g,
 WEBVIEW_API void webview_show_window(struct webview *w, int show)
 {
   if (show)
-    gtk_widget_show(GTK_WINDOW(w->priv.window));
+    gtk_widget_show_all(GTK_WINDOW(w->priv.window));
   else
     gtk_widget_hide(GTK_WINDOW(w->priv.window));
 }

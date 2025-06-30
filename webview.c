@@ -234,10 +234,6 @@ static int lua_webview_callback(lua_State *l) {
 	return 0;
 }
 
-static void dispatched_eval(struct webview *w, void *arg) {
-	webview_eval(w, (const char *) arg);
-}
-
 static void dispatched_eval_and_free(struct webview *w, void *arg) {
 	if (arg != NULL) {
 		webview_eval(w, (const char *)arg);

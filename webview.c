@@ -1,5 +1,6 @@
 #include <lua.h>
 #include <lauxlib.h>
+#include <string.h>
 
 #define WEBVIEW_IMPLEMENTATION
 
@@ -125,6 +126,7 @@ static LuaWebView * lua_webview_newuserdata(lua_State *l) {
 	lua_Integer resizable = lua_toboolean(l, 5);
 	lua_Integer hidden = lua_toboolean(l, 6);
 	lua_Integer debug = lua_toboolean(l, 7);
+
 	LuaWebView *lwv = (LuaWebView *)lua_newuserdata(l, sizeof(LuaWebView) + titleLen + 1 + urlLen + 1);
 	const char *titleCopy = ((char *)lwv) + sizeof(LuaWebView);
 	const char *urlCopy = ((char *)lwv) + sizeof(LuaWebView) + titleLen + 1;
@@ -236,13 +238,26 @@ static void dispatched_eval(struct webview *w, void *arg) {
 	webview_eval(w, (const char *) arg);
 }
 
+static void dispatched_eval_and_free(struct webview *w, void *arg) {
+	if (arg != NULL) {
+		webview_eval(w, (const char *)arg);
+		free(arg);
+	}
+}
+
 static int lua_webview_eval(lua_State *l) {
 	LuaWebView *lwv = (LuaWebView *)lua_webview_asudata(l, 1);
 	const char *js = luaL_checkstring(l, 2);
 	int dispatch = lua_toboolean(l, 3);
 	if (dispatch) {
-		// do we need to register the js code to dispatch?
-		webview_dispatch(&lwv->webview, dispatched_eval, (void *)js);
+		// copy the string for async call
+		// string can be garbage collected before the dispatched function runs.
+		char *js_copy = strdup(js);
+		if (js_copy == NULL) {
+			lua_pushboolean(l, 0);
+			return 1;
+		}
+		webview_dispatch(&lwv->webview, dispatched_eval_and_free, (void *)js_copy);
 		return 0;
 	}
 	int r = webview_eval(&lwv->webview, js);
